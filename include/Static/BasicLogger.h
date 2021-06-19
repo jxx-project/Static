@@ -24,8 +24,6 @@ public:
 		log(FormattingCallback{callback});
 	}
 
-	void setActive(bool active) noexcept;
-
 	static constexpr std::size_t bufferSize{1024};
 
 protected:
@@ -56,8 +54,6 @@ protected:
 
 	virtual void log(Formatter const& formatter) const noexcept;
 	virtual void writeLine(std::string_view) const noexcept;
-
-	bool active{true};
 };
 
 } // namespace Static

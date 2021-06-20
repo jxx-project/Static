@@ -8,7 +8,7 @@
 #include <Static/BasicLogger.h>
 #include <gtest/gtest.h>
 
-using Message = Static::Format::Buffer<Static::BasicLogger::bufferSize>;
+using Message = Static::Format::Buffer<Static::BasicLogger::maxLength>;
 
 TEST(BasicLogger, logPlain)
 {

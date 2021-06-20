@@ -14,7 +14,24 @@ using namespace std::chrono_literals;
 TEST(Format, noArgument)
 {
 	Static::Format::Buffer<80> testee("This is a raw string");
-	EXPECT_EQ("This is a raw string", testee.getResult());
+	EXPECT_EQ("This is a raw string", testee.getResult().str);
+}
+
+TEST(Format, formatResult)
+{
+	Static::Format::Buffer<80> testee(
+		"Static::Format::Result: {}, {}",
+		Static::Format::Result{false, std::string_view{"not truncated"}},
+		Static::Format::Result{true, std::string_view{"truncated"}});
+	EXPECT_FALSE(testee.getResult().isTruncated);
+	EXPECT_EQ("Static::Format::Result: not truncated, truncated[...]", testee.getResult().str);
+}
+
+TEST(Format, stringView)
+{
+	Static::Format::Buffer<80> testee("std::string_view values: {}", std::string_view{"string_view"});
+	EXPECT_FALSE(testee.getResult().isTruncated);
+	EXPECT_EQ("std::string_view values: string_view", testee.getResult().str);
 }
 
 TEST(Format, integralTypes)
@@ -29,25 +46,22 @@ TEST(Format, integralTypes)
 		(unsigned int){3},
 		long{-4},
 		(unsigned long){4});
-	EXPECT_EQ("Integral values: -1, 1, -2, 2, -3, 3, -4, 4", testee.getResult());
-}
-
-TEST(Format, stringView)
-{
-	Static::Format::Buffer<80> testee("std::string_view values: {}", std::string_view{"string_view"});
-	EXPECT_EQ("std::string_view values: string_view", testee.getResult());
+	EXPECT_FALSE(testee.getResult().isTruncated);
+	EXPECT_EQ("Integral values: -1, 1, -2, 2, -3, 3, -4, 4", testee.getResult().str);
 }
 
 TEST(Format, boolTypes)
 {
 	Static::Format::Buffer<80> testee("Boolean values: {}, {}", false, true);
-	EXPECT_EQ("Boolean values: false, true", testee.getResult());
+	EXPECT_FALSE(testee.getResult().isTruncated);
+	EXPECT_EQ("Boolean values: false, true", testee.getResult().str);
 }
 
 TEST(Format, floatTypes)
 {
 	Static::Format::Buffer<80> testee("Float values: {}", 3.14);
-	EXPECT_EQ("Float values: 3.140000", testee.getResult());
+	EXPECT_FALSE(testee.getResult().isTruncated);
+	EXPECT_EQ("Float values: 3.140000", testee.getResult().str);
 }
 
 TEST(Format, charPointerTypes)
@@ -58,7 +72,8 @@ TEST(Format, charPointerTypes)
 		static_cast<char*>(nullptr),
 		(char const*){"char const*"},
 		(char const*){nullptr});
-	EXPECT_EQ("Char pointer values: char*, (nil), char const*, (nil)", testee.getResult());
+	EXPECT_FALSE(testee.getResult().isTruncated);
+	EXPECT_EQ("Char pointer values: char*, (nil), char const*, (nil)", testee.getResult().str);
 }
 
 TEST(Format, pointerTypes)
@@ -69,13 +84,15 @@ TEST(Format, pointerTypes)
 		(void*){nullptr},
 		reinterpret_cast<int*>(0x4d5f60),
 		(int*){nullptr});
-	EXPECT_EQ("Pointer values: 0x1a2b3c, (nil), 0x4d5f60, (nil)", testee.getResult());
+	EXPECT_FALSE(testee.getResult().isTruncated);
+	EXPECT_EQ("Pointer values: 0x1a2b3c, (nil), 0x4d5f60, (nil)", testee.getResult().str);
 }
 
 TEST(Format, durationTypes)
 {
 	Static::Format::Buffer<80> testee("Duration values: {}, {}, {}, {}, {}, {}", 1ns, 2us, 3ms, 4s, 5min, 6h);
-	EXPECT_EQ("Duration values: 1ns, 2us, 3ms, 4s, 5min, 6h", testee.getResult());
+	EXPECT_FALSE(testee.getResult().isTruncated);
+	EXPECT_EQ("Duration values: 1ns, 2us, 3ms, 4s, 5min, 6h", testee.getResult().str);
 }
 
 int main(int argc, char* argv[])

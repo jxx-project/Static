@@ -24,14 +24,14 @@ public:
 		log(FormattingCallback{callback});
 	}
 
-	static constexpr std::size_t bufferSize{1024};
+	static constexpr std::size_t maxLength{1024};
 
 protected:
 	class Formatter
 	{
 	public:
 		virtual ~Formatter() noexcept = default;
-		virtual Format::Buffer<bufferSize> operator()() const noexcept = 0;
+		virtual Format::Buffer<maxLength> operator()() const noexcept = 0;
 	};
 
 	template<typename F>
@@ -43,7 +43,7 @@ protected:
 		}
 		~FormattingCallback() noexcept override = default;
 
-		Format::Buffer<bufferSize> operator()() const noexcept override
+		Format::Buffer<maxLength> operator()() const noexcept override
 		{
 			return callback();
 		}
@@ -53,7 +53,7 @@ protected:
 	};
 
 	virtual void log(Formatter const& formatter) const noexcept;
-	virtual void writeLine(std::string_view) const noexcept;
+	virtual void writeLine(Format::Result const& message) const noexcept;
 };
 
 } // namespace Static

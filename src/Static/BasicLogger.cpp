@@ -19,18 +19,27 @@ void BasicLogger::log(Formatter const& formatter) const noexcept
 	writeLine(message.getResult());
 }
 
-void BasicLogger::writeLine(std::string_view message) const noexcept
+void BasicLogger::writeLine(Format::Result const& message) const noexcept
 {
-	std::array<char, bufferSize> buffer;
-	std::size_t length{std::min(message.size(), buffer.size() - 1)};
-	std::copy(message.begin(), message.begin() + length, buffer.data());
-	buffer[length++] = '\n';
+	std::array<char, maxLength + Format::truncationSuffix.size() + 1> buffer;
+	Span out{buffer.data(), buffer.size()};
+	std::size_t length{message.str.size()};
+	if (length <= maxLength) {
+		std::copy(message.str.begin(), message.str.begin() + length, out.data());
+		out = out.subspan(length);
+	}
+	if (length > maxLength || message.isTruncated) {
+		std::copy(Format::truncationSuffix.begin(), Format::truncationSuffix.begin() + Format::truncationSuffix.size(), out.data());
+		out = out.subspan(Format::truncationSuffix.size());
+	}
+	*out.data() = '\n';
+	std::size_t totalLength(out.data() - buffer.data() + 1);
 
 	int propagateErrno{errno};
 
 	std::size_t totalBytesWritten{0};
 	::ssize_t bytesWritten{0};
-	while ((bytesWritten = ::write(STDERR_FILENO, &buffer[totalBytesWritten], length - totalBytesWritten)) > 0) {
+	while ((bytesWritten = ::write(STDERR_FILENO, buffer.data() + totalBytesWritten, totalLength - totalBytesWritten)) > 0) {
 		totalBytesWritten += bytesWritten;
 	}
 

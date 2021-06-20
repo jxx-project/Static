@@ -8,6 +8,7 @@
 #ifndef Static_Format_h_INCLUDED
 #define Static_Format_h_INCLUDED
 
+#include "Static/Span.h"
 #include <array>
 #include <charconv>
 #include <chrono>
@@ -20,6 +21,12 @@ namespace Static {
 class Format
 {
 public:
+	struct Result
+	{
+		bool isTruncated;
+		std::string_view str;
+	};
+
 	template<std::size_t bufferSize>
 	class Buffer
 	{
@@ -30,88 +37,84 @@ public:
 		{
 		}
 
-		Buffer(Buffer const& other) noexcept
+		Buffer(Buffer const& other) noexcept :
+			result{other.result.isTruncated, std::string_view(buffer.data(), other.result.str.size())}
 		{
-			std::copy(other.buffer.begin(), other.buffer.begin() + other.result.size(), buffer.begin());
-			result = std::string_view(buffer.data(), other.result.size());
+			std::copy(other.buffer.begin(), other.buffer.begin() + other.result.str.size(), buffer.begin());
 		}
 
 		Buffer& operator=(Buffer const& other) noexcept
 		{
 			if (this != &other) {
-				std::copy(other.buffer.begin(), other.buffer.begin() + other.result.size(), buffer.begin());
-				result = std::string_view(buffer.data(), other.result.size());
+				std::copy(other.buffer.begin(), other.buffer.begin() + other.result.str.size(), buffer.begin());
+				result = {other.result.isTruncated, std::string_view(buffer.data(), other.result.str.size())};
 			}
 			return *this;
 		}
 
 		~Buffer() noexcept = default;
 
-		[[nodiscard]] std::string_view getResult() const noexcept
+		[[nodiscard]] Result getResult() const noexcept
 		{
 			return result;
 		}
 
+		static constexpr std::size_t maxLength{bufferSize};
+
 	private:
 		std::array<char, bufferSize> buffer;
-		std::string_view result;
+		Result result;
 	};
 
 	template<typename... Args>
-	[[nodiscard]] static std::string_view toBuffer(char* buffer, std::size_t bufferSize, std::string_view fmt, Args const&... args)
+	[[nodiscard]] static Result toBuffer(char* buffer, std::size_t bufferSize, std::string_view fmt, Args const&... args)
 	{
 		Span out{buffer, bufferSize};
-		((write(out, fmt, args)), ...);
-		write(out, fmt);
-		return std::string_view{buffer, std::size_t(out.data() - buffer)};
+		bool isTruncated{(write(out, fmt, args) || ...) || write(out, fmt)};
+		return {isTruncated, std::string_view{buffer, std::size_t(out.data() - buffer)}};
 	}
 
-	static constexpr std::size_t bufferSize{1024};
+	static constexpr std::string_view truncationSuffix{"[...]"};
 
 private:
-	class Span
-	{
-	public:
-		Span(char* first, std::size_t count) noexcept;
-
-		[[nodiscard]] char* data() noexcept;
-		[[nodiscard]] std::size_t size() const noexcept;
-		[[nodiscard]] Span subspan(std::size_t offset) noexcept;
-
-	private:
-		char* first;
-		std::size_t extent;
-	};
-
 	template<typename T>
-	static void write(Span& out, std::string_view& fmt, T const& value) noexcept
+	static bool write(Span& out, std::string_view& fmt, T const& value) noexcept
 	{
 		std::size_t placeholderPos{fmt.find("{}")};
-		write(out, std::string_view(fmt.data(), placeholderPos));
-		fmt.remove_prefix(placeholderPos + 2);
-		write(out, value);
+		bool isTruncated{write(out, std::string_view(fmt.data(), placeholderPos))};
+		if (!isTruncated) {
+			fmt.remove_prefix(placeholderPos + 2);
+			isTruncated = write(out, value);
+		}
+		return isTruncated;
 	}
+
+	static bool write(Span& out, Result const& value) noexcept;
+	static bool write(Span& out, std::string_view const& value) noexcept;
 
 	template<typename T, typename = typename std::enable_if<std::is_integral<T>::value && !std::is_same<T, bool>::value>::type>
-	static void write(Span& out, T const& value) noexcept
+	static bool write(Span& out, T const& value, int base = 10) noexcept
 	{
-		std::to_chars_result conversionResult{std::to_chars(out.data(), out.data() + out.size(), value)};
+		bool isTruncated{false};
+		std::to_chars_result conversionResult{std::to_chars(out.data(), out.data() + out.size(), value, base)};
 		if (conversionResult.ec == std::errc{}) {
 			out = out.subspan(conversionResult.ptr - out.data());
+		} else {
+			isTruncated = true;
 		}
+		return isTruncated;
 	}
 
-	static void write(Span& out, std::string_view value) noexcept;
-	static void write(Span& out, bool value) noexcept;
-	static void write(Span& out, double value) noexcept;
-	static void write(Span& out, char const* ptr) noexcept;
-	static void write(Span& out, void const* ptr) noexcept;
-	static void write(Span& out, std::chrono::nanoseconds duration) noexcept;
-	static void write(Span& out, std::chrono::microseconds duration) noexcept;
-	static void write(Span& out, std::chrono::milliseconds duration) noexcept;
-	static void write(Span& out, std::chrono::seconds duration) noexcept;
-	static void write(Span& out, std::chrono::minutes duration) noexcept;
-	static void write(Span& out, std::chrono::hours duration) noexcept;
+	static bool write(Span& out, bool value) noexcept;
+	static bool write(Span& out, double value) noexcept;
+	static bool write(Span& out, char const* ptr) noexcept;
+	static bool write(Span& out, void const* ptr) noexcept;
+	static bool write(Span& out, std::chrono::nanoseconds duration) noexcept;
+	static bool write(Span& out, std::chrono::microseconds duration) noexcept;
+	static bool write(Span& out, std::chrono::milliseconds duration) noexcept;
+	static bool write(Span& out, std::chrono::seconds duration) noexcept;
+	static bool write(Span& out, std::chrono::minutes duration) noexcept;
+	static bool write(Span& out, std::chrono::hours duration) noexcept;
 };
 
 } // namespace Static

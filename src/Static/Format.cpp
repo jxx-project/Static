@@ -9,103 +9,79 @@
 
 namespace Static {
 
-Format::Span::Span(char* first, std::size_t count) noexcept : first{first}, extent{count}
+bool Format::write(Span& out, Format::Result const& value) noexcept
 {
+	return write(out, value.str) || value.isTruncated && write(out, truncationSuffix);
 }
 
-char* Format::Span::data() noexcept
+bool Format::write(Span& out, std::string_view const& value) noexcept
 {
-	return first;
-}
-
-std::size_t Format::Span::size() const noexcept
-{
-	return extent;
-}
-
-Format::Span Format::Span::subspan(std::size_t offset) noexcept
-{
-	return Span{first + offset, extent - offset};
-}
-
-void Format::write(Span& out, std::string_view value) noexcept
-{
-	std::size_t length{std::min(value.size(), out.size())};
-	std::copy(value.begin(), value.begin() + length, out.data());
-	out = out.subspan(length);
-}
-
-void Format::write(Span& out, bool value) noexcept
-{
-	if (value) {
-		write(out, std::string_view("true"));
+	bool isTruncated{false};
+	if (value.size() <= out.size()) {
+		std::copy(value.begin(), value.begin() + value.size(), out.data());
+		out = out.subspan(value.size());
 	} else {
-		write(out, std::string_view("false"));
+		isTruncated = true;
 	}
+	return isTruncated;
 }
 
-void Format::write(Span& out, double value) noexcept
+bool Format::write(Span& out, bool value) noexcept
 {
-	std::size_t length{std::size_t(::snprintf(out.data(), out.size(), "%f", double(value)))};
-	out = out.subspan(std::min(length, out.size()));
+	return value ? write(out, std::string_view("true")) : write(out, std::string_view("false"));
 }
 
-void Format::write(Span& out, char const* ptr) noexcept
+bool Format::write(Span& out, double value) noexcept
 {
-	if (ptr == nullptr) {
-		write(out, std::string_view("(nil)"));
+	bool isTruncated{false};
+	::ssize_t lengthOrError{::snprintf(out.data(), out.size(), "%f", double(value))};
+	if (lengthOrError >= 0 && lengthOrError <= out.size()) {
+		out = out.subspan(lengthOrError);
 	} else {
-		write(out, std::string_view(ptr));
+		isTruncated = true;
 	}
+	return isTruncated;
 }
 
-void Format::write(Span& out, void const* ptr) noexcept
+bool Format::write(Span& out, char const* ptr) noexcept
 {
-	if (ptr == nullptr) {
-		write(out, std::string_view("(nil)"));
-	} else {
-		write(out, std::string_view("0x"));
-		std::to_chars_result conversionResult{std::to_chars(out.data(), out.data() + out.size(), std::uintptr_t(ptr), 16)};
-		if (conversionResult.ec == std::errc{}) {
-			out = out.subspan(conversionResult.ptr - out.data());
-		}
-	}
+	return ptr == nullptr ? write(out, std::string_view("(nil)")) : write(out, std::string_view(ptr));
 }
 
-void Format::write(Span& out, std::chrono::nanoseconds duration) noexcept
+bool Format::write(Span& out, void const* ptr) noexcept
 {
-	write(out, duration.count());
-	write(out, std::string_view("ns"));
+	return ptr == nullptr ? write(out, std::string_view("(nil)")) :
+							write(out, std::string_view("0x")) || write(out, std::uintptr_t(ptr), 16);
 }
 
-void Format::write(Span& out, std::chrono::microseconds duration) noexcept
+bool Format::write(Span& out, std::chrono::nanoseconds duration) noexcept
 {
-	write(out, duration.count());
-	write(out, std::string_view("us"));
+	return write(out, duration.count()) || write(out, std::string_view("ns"));
 }
 
-void Format::write(Span& out, std::chrono::milliseconds duration) noexcept
+bool Format::write(Span& out, std::chrono::microseconds duration) noexcept
 {
-	write(out, duration.count());
-	write(out, std::string_view("ms"));
+	return write(out, duration.count()) || write(out, std::string_view("us"));
 }
 
-void Format::write(Span& out, std::chrono::seconds duration) noexcept
+bool Format::write(Span& out, std::chrono::milliseconds duration) noexcept
 {
-	write(out, duration.count());
-	write(out, std::string_view("s"));
+	return write(out, duration.count()) || write(out, std::string_view("ms"));
 }
 
-void Format::write(Span& out, std::chrono::minutes duration) noexcept
+bool Format::write(Span& out, std::chrono::seconds duration) noexcept
 {
-	write(out, duration.count());
-	write(out, std::string_view("min"));
+	return write(out, duration.count()) || write(out, std::string_view("s"));
 }
 
-void Format::write(Span& out, std::chrono::hours duration) noexcept
+bool Format::write(Span& out, std::chrono::minutes duration) noexcept
 {
-	write(out, duration.count());
-	write(out, std::string_view("h"));
+	return write(out, duration.count()) || write(out, std::string_view("min"));
+}
+
+bool Format::write(Span& out, std::chrono::hours duration) noexcept
+{
+	return write(out, duration.count()) || write(out, std::string_view("h"));
 }
 
 } // namespace Static

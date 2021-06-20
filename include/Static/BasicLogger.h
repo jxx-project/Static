@@ -24,6 +24,8 @@ public:
 		log(FormattingCallback{callback});
 	}
 
+	void setActive(bool active) noexcept;
+
 	static constexpr std::size_t maxLength{1024};
 
 protected:
@@ -54,6 +56,8 @@ protected:
 
 	virtual void log(Formatter const& formatter) const noexcept;
 	virtual void writeLine(Format::Result const& message) const noexcept;
+
+	bool active{true};
 };
 
 } // namespace Static

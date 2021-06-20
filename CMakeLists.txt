@@ -36,3 +36,4 @@ install(FILES
 
 enable_testing()
 add_subdirectory(test)
+add_subdirectory(benchmark)

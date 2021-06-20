@@ -13,10 +13,17 @@
 
 namespace Static {
 
+void BasicLogger::setActive(bool active) noexcept
+{
+	this->active = active;
+}
+
 void BasicLogger::log(Formatter const& formatter) const noexcept
 {
-	Format::Buffer message{formatter()};
-	writeLine(message.getResult());
+	if (active) {
+		Format::Buffer message{formatter()};
+		writeLine(message.getResult());
+	}
 }
 
 void BasicLogger::writeLine(FormatResult const& message) const noexcept

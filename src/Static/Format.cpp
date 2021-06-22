@@ -9,7 +9,7 @@
 
 namespace Static {
 
-bool Format::write(Span& out, Format::Result const& value) noexcept
+bool Format::write(Span& out, FormatResult const& value) noexcept
 {
 	return write(out, value.str) || value.isTruncated && write(out, truncationSuffix);
 }

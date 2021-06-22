@@ -53,7 +53,7 @@ protected:
 	};
 
 	virtual void log(Formatter const& formatter) const noexcept;
-	virtual void writeLine(Format::Result const& message) const noexcept;
+	virtual void writeLine(FormatResult const& message) const noexcept;
 };
 
 } // namespace Static

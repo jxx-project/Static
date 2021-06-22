@@ -8,6 +8,7 @@
 #ifndef Static_Format_h_INCLUDED
 #define Static_Format_h_INCLUDED
 
+#include "Static/FormatResult.h"
 #include "Static/Span.h"
 #include <array>
 #include <charconv>
@@ -21,19 +22,13 @@ namespace Static {
 class Format
 {
 public:
-	struct Result
-	{
-		bool isTruncated;
-		std::string_view str;
-	};
-
 	template<std::size_t bufferSize>
 	class Buffer
 	{
 	public:
 		template<typename... Args>
 		explicit Buffer(std::string_view fmt, Args const&... args) noexcept :
-			result{Format::toBuffer(buffer.data(), buffer.size(), fmt, std::forward<Args const&>(args)...)}
+			result{Format::toBuffer(Span{buffer.data(), buffer.size()}, fmt, std::forward<Args const&>(args)...)}
 		{
 		}
 
@@ -54,7 +49,7 @@ public:
 
 		~Buffer() noexcept = default;
 
-		[[nodiscard]] Result getResult() const noexcept
+		[[nodiscard]] FormatResult getResult() const noexcept
 		{
 			return result;
 		}
@@ -63,15 +58,15 @@ public:
 
 	private:
 		std::array<char, bufferSize> buffer;
-		Result result;
+		FormatResult result;
 	};
 
 	template<typename... Args>
-	[[nodiscard]] static Result toBuffer(char* buffer, std::size_t bufferSize, std::string_view fmt, Args const&... args)
+	[[nodiscard]] static FormatResult toBuffer(Span out, std::string_view fmt, Args const&... args)
 	{
-		Span out{buffer, bufferSize};
+		char const* first{out.data()};
 		bool isTruncated{(write(out, fmt, args) || ...) || write(out, fmt)};
-		return {isTruncated, std::string_view{buffer, std::size_t(out.data() - buffer)}};
+		return {isTruncated, std::string_view{first, std::size_t(out.data() - first)}};
 	}
 
 	static constexpr std::string_view truncationSuffix{"[...]"};
@@ -89,7 +84,7 @@ private:
 		return isTruncated;
 	}
 
-	static bool write(Span& out, Result const& value) noexcept;
+	static bool write(Span& out, FormatResult const& value) noexcept;
 	static bool write(Span& out, std::string_view const& value) noexcept;
 
 	template<typename T, typename = typename std::enable_if<std::is_integral<T>::value && !std::is_same<T, bool>::value>::type>

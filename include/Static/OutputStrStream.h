@@ -1,6 +1,7 @@
 #ifndef Static_OutputStrStream_h_INCLUDED
 #define Static_OutputStrStream_h_INCLUDED
 
+#include "Static/FormatResult.h"
 #include <array>
 #include <ostream>
 #include <string_view>
@@ -21,9 +22,9 @@ public:
 
 	~OutputStrStream() noexcept override = default;
 
-	std::string_view getStringView() const noexcept
+	FormatResult getResult() const noexcept
 	{
-		return buffer.getStringView();
+		return buffer.getResult();
 	}
 
 private:
@@ -42,15 +43,22 @@ private:
 			other.setp(nullptr, nullptr);
 		}
 
-		virtual ~Buffer() = default;
+		~Buffer() noexcept override = default;
 
-		std::string_view getStringView() const noexcept
+		int_type overflow(int_type c) noexcept override
 		{
-			return std::string_view(pbase(), pptr() - pbase());
+			isTruncated = true;
+			return std::basic_streambuf<char>::overflow(c);
+		}
+
+		FormatResult getResult() const noexcept
+		{
+			return {isTruncated, std::string_view(pbase(), pptr() - pbase())};
 		}
 
 	private:
 		std::array<char, bufferSize> buffer;
+		bool isTruncated{false};
 	};
 
 	Buffer buffer;

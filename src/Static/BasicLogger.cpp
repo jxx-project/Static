@@ -19,7 +19,7 @@ void BasicLogger::log(Formatter const& formatter) const noexcept
 	writeLine(message.getResult());
 }
 
-void BasicLogger::writeLine(Format::Result const& message) const noexcept
+void BasicLogger::writeLine(FormatResult const& message) const noexcept
 {
 	std::array<char, maxLength + Format::truncationSuffix.size() + 1> buffer;
 	Span out{buffer.data(), buffer.size()};

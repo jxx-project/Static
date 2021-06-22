@@ -20,11 +20,11 @@ TEST(Format, noArgument)
 TEST(Format, formatResult)
 {
 	Static::Format::Buffer<80> testee(
-		"Static::Format::Result: {}, {}",
-		Static::Format::Result{false, std::string_view{"not truncated"}},
-		Static::Format::Result{true, std::string_view{"truncated"}});
+		"Static::FormatResult: {}, {}",
+		Static::FormatResult{false, std::string_view{"not truncated"}},
+		Static::FormatResult{true, std::string_view{"truncated"}});
 	EXPECT_FALSE(testee.getResult().isTruncated);
-	EXPECT_EQ("Static::Format::Result: not truncated, truncated[...]", testee.getResult().str);
+	EXPECT_EQ("Static::FormatResult: not truncated, truncated[...]", testee.getResult().str);
 }
 
 TEST(Format, stringView)

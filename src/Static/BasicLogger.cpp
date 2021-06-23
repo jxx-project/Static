@@ -13,13 +13,7 @@
 
 namespace Static {
 
-void BasicLogger::log(Formatter const& formatter) const noexcept
-{
-	Format::Buffer message{formatter()};
-	writeLine(message.getResult());
-}
-
-void BasicLogger::writeLine(FormatResult const& message) const noexcept
+void BasicLogger::writeLine(FormatResult const& message) noexcept
 {
 	std::array<char, maxLength + Format::truncationSuffix.size() + 1> buffer;
 	Span out{buffer.data(), buffer.size()};
@@ -44,6 +38,12 @@ void BasicLogger::writeLine(FormatResult const& message) const noexcept
 	}
 
 	errno = propagateErrno;
+}
+
+void BasicLogger::log(Formatter const& formatter) const noexcept
+{
+	Format::Buffer message{formatter()};
+	writeLine(message.getResult());
 }
 
 } // namespace Static

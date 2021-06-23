@@ -25,6 +25,7 @@ public:
 	}
 
 	void setActive(bool active) noexcept;
+	static void writeLine(FormatResult const& message) noexcept;
 
 	static constexpr std::size_t maxLength{1024};
 
@@ -55,7 +56,6 @@ protected:
 	};
 
 	virtual void log(Formatter const& formatter) const noexcept;
-	virtual void writeLine(FormatResult const& message) const noexcept;
 
 	bool active{true};
 };

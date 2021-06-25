@@ -36,11 +36,11 @@ private:
 			setp(buffer.data(), buffer.data() + buffer.size());
 		}
 
-		Buffer(Buffer&& other) noexcept
+		Buffer(Buffer const& other) noexcept
 		{
 			setp(buffer.data(), buffer.data() + buffer.size());
 			sputn(other.buffer.data(), other.pptr() - other.pbase());
-			other.setp(nullptr, nullptr);
+			isTruncated = other.isTruncated;
 		}
 
 		~Buffer() noexcept override = default;

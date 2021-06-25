@@ -20,18 +20,19 @@ TEST(OutputStrStream, outputString)
 	EXPECT_EQ("testing output string", testee.getResult().str);
 }
 
-TEST(OutputStrStream, moveStream)
+TEST(OutputStrStream, copyStream)
 {
 	Static::OutputStrStream<80> other;
 	other << "testing"
 		  << " "
-		  << "move"
+		  << "copy"
 		  << " "
 		  << "stream";
 	Static::OutputStrStream<80> testee{std::move(other)};
-	EXPECT_EQ("", other.getResult().str);
+	EXPECT_FALSE(other.getResult().isTruncated);
+	EXPECT_EQ("testing copy stream", other.getResult().str);
 	EXPECT_FALSE(testee.getResult().isTruncated);
-	EXPECT_EQ("testing move stream", testee.getResult().str);
+	EXPECT_EQ("testing copy stream", testee.getResult().str);
 }
 
 TEST(OutputStrStream, overflow)

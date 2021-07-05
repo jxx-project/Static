@@ -47,8 +47,10 @@ void BasicLogger::writeLine(FormatResult const& message) noexcept
 
 void BasicLogger::log(Formatter const& formatter) const noexcept
 {
-	Format::Buffer message{formatter()};
-	writeLine(message.getResult());
+	if (active) {
+		Format::Buffer message{formatter()};
+		writeLine(message.getResult());
+	}
 }
 
 } // namespace Static

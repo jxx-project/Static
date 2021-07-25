@@ -38,7 +38,7 @@ TEST(Format, integralTypes)
 {
 	Static::Format::Buffer<80> testee(
 		"Integral values: {}, {}, {}, {}, {}, {}, {}, {}",
-		char{-1},
+		(signed char){-1},
 		(unsigned char){1},
 		short{-2},
 		(unsigned short){2},

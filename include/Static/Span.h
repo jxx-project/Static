@@ -15,11 +15,25 @@ namespace Static {
 class Span
 {
 public:
-	Span(char* first, std::size_t count) noexcept;
+	constexpr Span(char* first, std::size_t count) noexcept : first{first}, extent{count}
+	{
+	}
 
-	[[nodiscard]] char* data() noexcept;
-	[[nodiscard]] std::size_t size() const noexcept;
-	[[nodiscard]] Span subspan(std::size_t offset) noexcept;
+	[[nodiscard]] constexpr char* data() noexcept
+	{
+		return first;
+	}
+
+	[[nodiscard]] constexpr std::size_t size() const noexcept
+	{
+		return extent;
+	}
+
+	[[nodiscard]] constexpr Span subspan(std::size_t offset) noexcept
+	{
+		return Span{first + offset, extent - offset};
+	}
+
 
 private:
 	char* first;

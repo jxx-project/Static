@@ -4,6 +4,8 @@
 # SPDX-License-Identifier:	BSL-1.0
 #
 
+find_package(fmt REQUIRED)
+
 cmake_minimum_required(VERSION 3.13)
 project(StaticBenchmark VERSION 0.0.1 LANGUAGES CXX)
 
@@ -35,3 +37,8 @@ add_executable(logStdio logStdio.cpp)
 target_include_directories(logStdio PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_link_libraries(logStdio Static)
 target_compile_options(logStdio PRIVATE -fno-exceptions -fno-rtti)
+
+add_executable(logFmt logFmt.cpp)
+target_include_directories(logFmt PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+target_link_libraries(logFmt fmt Static)
+target_compile_options(logFmt PRIVATE -fno-exceptions -fno-rtti)
